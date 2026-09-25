@@ -59,6 +59,7 @@ class Handler(BaseHTTPRequestHandler):
     """把标准库 HTTP 请求转换为路由调用。"""
 
     service: DomainService
+    router = staticmethod(route)
 
     def _handle(self) -> None:
         length = int(self.headers.get("Content-Length", "0"))
@@ -68,8 +69,8 @@ class Handler(BaseHTTPRequestHandler):
         except (UnicodeDecodeError, json.JSONDecodeError):
             self._write(400, {"error": "invalid_json", "message": "请求体必须是 UTF-8 JSON"})
             return
-        status, payload = route(self.service, self.command, self.path, body,
-                                {"X-Actor-Id": self.headers.get("X-Actor-Id", "")})
+        status, payload = self.router(self.service, self.command, self.path, body,
+                                      {"X-Actor-Id": self.headers.get("X-Actor-Id", "")})
         self._write(status, payload)
 
     def _write(self, status: int, payload: dict[str, Any]) -> None:
